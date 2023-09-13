@@ -13,6 +13,7 @@ import javax.crypto.spec.IvParameterSpec;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -20,6 +21,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 /**
  *
@@ -27,7 +29,6 @@ import javax.crypto.SecretKeyFactory;
  */
 public class EncryptFunctions {
 
-    
     public static String hashSHA256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -37,7 +38,9 @@ public class EncryptFunctions {
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
                 hexString.append(hex);
             }
             return hexString.toString();
@@ -77,4 +80,23 @@ public class EncryptFunctions {
             return null;
         }
     }
+
+    public static String decryptAES_CBC(String encryptedText, String password, byte[] ivBytes) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
+        try {
+            SecretKeySpec keySpec = new SecretKeySpec(password.getBytes(StandardCharsets.UTF_8), "AES");
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivParameterSpec);
+
+            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
+            byte[] decryptedPasswordBytes = cipher.doFinal(encryptedBytes);
+
+            return new String(decryptedPasswordBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

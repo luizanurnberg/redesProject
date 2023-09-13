@@ -6,7 +6,13 @@
 package com.redes.project.main;
 
 import com.redes.project.model.User;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 /**
  *
@@ -14,7 +20,7 @@ import java.util.Scanner;
  */
 public class RedesProject {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException {
         
         Scanner scanner = new Scanner(System.in);
         
@@ -33,7 +39,7 @@ public class RedesProject {
         String userPassword = scanner.nextLine();
         User userLogin = new User(userEmail, userPassword);
         
-        if(User.compareUserInfo() == true){
+        if(User.compareUserInfo(userEmail, userPassword) == true){
             System.out.println("Match: true");
         } else {
             System.out.println("Match: false");
