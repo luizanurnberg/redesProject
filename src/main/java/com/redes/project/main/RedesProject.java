@@ -9,6 +9,7 @@ import com.redes.project.model.User;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Scanner;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -20,8 +21,9 @@ import javax.crypto.NoSuchPaddingException;
  */
 public class RedesProject {
 
-    public static void main(String[] args) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeySpecException {
         KeyManager.initializeSecretKey();
+        KeyManager.generateSalt();
 
         Scanner scanner = new Scanner(System.in);
 
