@@ -14,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -50,25 +51,18 @@ public class EncryptFunctions {
         }
     }
 
-    public static String encryptAES_CBC(String input) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+    public static String encryptAES_CBC(String input, SecretKey secretKey) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         try {
-            // Gere uma chave AES e um IV aleatório
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(256); // Tamanho da chave AES (256 bits)
-            SecretKey secretKey = keyGen.generateKey();
             byte[] ivBytes = new byte[16];
             SecureRandom random = new SecureRandom();
             random.nextBytes(ivBytes);
 
-            // Configure o cifrador AES-CBC
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding"); //COLOCAR ISSO EM OUTRO ARQUIVO
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
 
-            // Criptografa a senha
-            byte[] encryptedPasswordBytes = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
 
-            // Concatena IV e senha criptografada como uma única string (base64)
+            byte[] encryptedPasswordBytes = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
             byte[] combined = new byte[ivBytes.length + encryptedPasswordBytes.length];
             System.arraycopy(ivBytes, 0, combined, 0, ivBytes.length);
             System.arraycopy(encryptedPasswordBytes, 0, combined, ivBytes.length, encryptedPasswordBytes.length);
@@ -81,16 +75,15 @@ public class EncryptFunctions {
         }
     }
 
-    public static String decryptAES_CBC(String encryptedText, String password, byte[] ivBytes) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
+    public static String decryptAES_CBC(String encryptedText, SecretKey secretKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
         try {
-            SecretKeySpec keySpec = new SecretKeySpec(password.getBytes(StandardCharsets.UTF_8), "AES");
-            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
-
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivParameterSpec);
-
             byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
-            byte[] decryptedPasswordBytes = cipher.doFinal(encryptedBytes);
+            byte[] ivBytes = Arrays.copyOfRange(encryptedBytes, 0, 16);
+
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
+            byte[] decryptedPasswordBytes = cipher.doFinal(encryptedBytes, 16, encryptedBytes.length - 16);
 
             return new String(decryptedPasswordBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
