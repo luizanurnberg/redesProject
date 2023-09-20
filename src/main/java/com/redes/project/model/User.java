@@ -22,6 +22,7 @@ import javax.crypto.SecretKey;
 /**
  *
  * @author luizanurnberg
+ * @author mariaceciliaholler
  */
 public class User {
 

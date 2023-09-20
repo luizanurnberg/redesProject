@@ -19,7 +19,8 @@ import javax.crypto.SecretKey;
 
 /**
  *
- * @author luizanurnberg
+ * @author luizanurnberg 
+ * @author mariaceciliaholler
  */
 public class RedesProject {
 

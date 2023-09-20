@@ -25,6 +25,7 @@ import javax.crypto.spec.PBEKeySpec;
 /**
  *
  * @author luizanurnberg
+ * @author mariaceciliaholler
  */
 public class KeyManager {
 
