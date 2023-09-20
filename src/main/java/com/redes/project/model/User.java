@@ -7,6 +7,7 @@ package com.redes.project.model;
 import com.redes.project.encrypt.EncryptFunctions;
 import com.redes.project.encrypt.KeyManager;
 import static com.redes.project.encrypt.KeyManager.derivePassword;
+import com.redes.project.file.WriteFile;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -16,6 +17,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Random;
 import java.util.UUID;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -31,6 +33,7 @@ public class User {
     private String id;
     private String email;
     private String password;
+
 
     public User(String email, String password) {
         this.id = generateRandomUserId();
@@ -55,28 +58,23 @@ public class User {
         return uuid.toString();
     }
 
-    public static void saveUserInfo(User user) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, InvalidKeySpecException {
-        try ( PrintWriter writer = new PrintWriter(new FileWriter("src/main/java/com/redes/project/model/userInfo.txt"), true)) {
-            SecretKey secretKey = KeyManager.getSecretKey();
-            byte[] salt = KeyManager.getSalt();
-            EncryptFunctions encryptFunction = new EncryptFunctions();
-
-            String derivedPassword = derivePassword(user.getPassword(), salt);
-            String encryptedEmail = encryptFunction.hashSHA256(user.getEmail());
-            String encryptedPassword = encryptFunction.encryptAES_CBC(derivedPassword, secretKey);
-            String userEmailInfo = "E-mail: " + encryptedEmail;
-            String userPasswordInfo = "Password: " + encryptedPassword;
-
-            writer.println(userEmailInfo);
-            writer.println(userPasswordInfo);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void saveUserInfo(User user) throws InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+        EncryptFunctions encryptFunction = new EncryptFunctions();
+        SecretKey secretKey = KeyManager.getSecretKey();
+        WriteFile userInfo = new WriteFile();
+        byte[] salt = KeyManager.getSalt();
+        
+        String derivedPassword = derivePassword(user.getPassword(), salt);
+        String encryptedEmail = encryptFunction.hashSHA256(user.getEmail());
+        String encryptedPassword = encryptFunction.encryptAES_CBC(derivedPassword, secretKey);
+        
+        String userEmailInfo = encryptedEmail;
+        String userPasswordInfo = encryptedPassword;
+        userInfo.saveUserInFile(userEmailInfo, userPasswordInfo);
     }
 
     public static boolean compareUserInfo(String userEmail, String userPassword) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException {
-        try ( BufferedReader br = new BufferedReader(new FileReader("src/main/java/com/redes/project/model/userInfo.txt"))) {
+        try ( BufferedReader br = new BufferedReader(new FileReader("src/main/java/com/redes/project/file/userInfo.txt"))) {
             String line;
             boolean emailMatch = false;
             boolean passwordMatch = false;
@@ -94,7 +92,7 @@ public class User {
                     String encryptedPassword = line.substring(10);
                     SecretKey secretKey = KeyManager.getSecretKey();
                     byte[] salt = KeyManager.getSalt();
-                    
+
                     String reproducedDerivedPassword = derivePassword(userPassword, salt);
                     String decryptedPassword = EncryptFunctions.decryptAES_CBC(encryptedPassword, secretKey);
 

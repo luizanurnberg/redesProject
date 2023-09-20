@@ -6,6 +6,7 @@ package com.redes.project.main;
 
 import com.redes.project.encrypt.KeyManager;
 import com.redes.project.model.User;
+import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -21,10 +22,9 @@ import javax.crypto.NoSuchPaddingException;
  */
 public class RedesProject {
 
-    public static void main(String[] args) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public static void main(String[] args) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeySpecException, IOException {
         KeyManager.initializeSecretKey();
         KeyManager.generateSalt();
-
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("--- CADASTRO --- ");

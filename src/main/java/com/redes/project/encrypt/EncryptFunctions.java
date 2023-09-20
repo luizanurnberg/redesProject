@@ -4,6 +4,7 @@
  */
 package com.redes.project.encrypt;
 
+import com.redes.project.file.WriteFile;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -12,12 +13,16 @@ import javax.crypto.spec.IvParameterSpec;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 /**
  *
@@ -30,7 +35,6 @@ public class EncryptFunctions {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
 
-            // Converte o hash para uma representação hexadecimal
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
@@ -55,7 +59,8 @@ public class EncryptFunctions {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
-
+            WriteFile ivInfo = new WriteFile();
+            ivInfo.saveIvInFile(ivSpec.toString(), secretKey);
 
             byte[] encryptedPasswordBytes = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
             byte[] combined = new byte[ivBytes.length + encryptedPasswordBytes.length];
@@ -87,4 +92,40 @@ public class EncryptFunctions {
         }
     }
 
+//    public static String derivePassword(String password, byte[] salt) throws InvalidKeySpecException {
+//        try {
+//            int iterations = 10000;
+//            int keyLength = 256;
+//            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+//            KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, keyLength);
+//            byte[] hash = factory.generateSecret(spec).getEncoded();
+//            return Base64.getEncoder().encodeToString(hash);
+//        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
+
+    public static String encryptIV(String input, SecretKey secretKey) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+        try {
+            byte[] ivBytes = new byte[16];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(ivBytes);
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
+
+            byte[] encryptedPasswordBytes = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
+            byte[] combined = new byte[ivBytes.length + encryptedPasswordBytes.length];
+            System.arraycopy(ivBytes, 0, combined, 0, ivBytes.length);
+            System.arraycopy(encryptedPasswordBytes, 0, combined, ivBytes.length, encryptedPasswordBytes.length);
+
+            return Base64.getEncoder().encodeToString(combined);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
