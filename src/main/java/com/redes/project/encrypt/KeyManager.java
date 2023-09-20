@@ -5,17 +5,15 @@
 package com.redes.project.encrypt;
 
 import com.redes.project.file.WriteFile;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.Random;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
@@ -30,57 +28,76 @@ import javax.crypto.spec.PBEKeySpec;
  */
 public class KeyManager {
 
-    private static SecretKey secretKey;
+    private SecretKey secretKey;
+    private SecretKey masterSecretKey;
+    private byte[] salt;
+    private byte[] ivBytes;
 
-    private static byte[] salt;
-
-    public static void initializeSecretKey() throws IOException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-        try {
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-            keyGenerator.init(256);
-            secretKey = keyGenerator.generateKey();
-
-            WriteFile keyInfo = new WriteFile();
-            keyInfo.saveKeyInFile(secretKey);
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static SecretKey getSecretKey() {
-        if (secretKey == null) {
-            throw new IllegalStateException("Secret key not initialized. Call initializeSecretKey() first.");
-        }
-        return secretKey;
-    }
-
-    public static byte[] generateSalt() {
+    public KeyManager() throws IOException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
-        return salt;
+        keyGenerator.init(256);
+        this.secretKey = keyGenerator.generateKey();
+        this.masterSecretKey = keyGenerator.generateKey();
+        this.ivBytes = new byte[16];
+        random.nextBytes(this.ivBytes);
+
+        WriteFile.saveKeyInFile(this.secretKey.toString(), this.masterSecretKey, this.ivBytes);
+        WriteFile.saveIvInFile(Arrays.toString(this.ivBytes), this.secretKey);
     }
 
-    public static byte[] getSalt() {
-        if (salt == null) {
-            salt = generateSalt();
+    public byte[] generateSalt() {
+        try {
+            SecureRandom random = new SecureRandom();
+            byte[] salt = new byte[16];
+            random.nextBytes(salt);
+
+            return salt;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-        return salt;
     }
 
     public static String derivePassword(String password, byte[] salt) throws InvalidKeySpecException {
         try {
             int iterations = 10000;
             int keyLength = 256;
+
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, keyLength);
             byte[] hash = factory.generateSecret(spec).getEncoded();
+
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public SecretKey getMasterSecretKey() {
+        if (masterSecretKey == null) {
+            throw new IllegalStateException("Secret key não foi inicializada.");
+        }
+        return this.masterSecretKey;
+    }
+
+    public byte[] getIv() {
+        return this.ivBytes;
+    }
+
+    public byte[] getSalt() {
+        if (salt == null) {
+            salt = this.generateSalt();
+        }
+        return salt;
+    }
+
+    public SecretKey getSecretKey() {
+        if (secretKey == null) {
+            throw new IllegalStateException("Secret key não foi inicializada.");
+        }
+        return this.secretKey;
     }
 
 }

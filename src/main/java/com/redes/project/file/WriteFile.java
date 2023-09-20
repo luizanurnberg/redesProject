@@ -15,7 +15,6 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
 
 /**
  *
@@ -33,28 +32,26 @@ public class WriteFile {
             writer.println("### USER DELIMITER ### " + userDelimiter);
             writer.println(userEmailInfo);
             writer.println(userPasswordInfo);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void saveKeyInFile(SecretKey secretkey) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
+    public static void saveKeyInFile(String secretKey, SecretKey masterSecretKey, byte[] iv) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
         try ( PrintWriter writer = new PrintWriter(new FileWriter("src/main/java/com/redes/project/file/keyInfo.txt", true))) {
             Random rand = new Random();
             EncryptFunctions encryptFunction = new EncryptFunctions();
             int keyDelimiter = rand.nextInt(1000000);
-            String encryptedKey = encryptFunction.encryptAES_CBC(secretkey.toString(), secretkey);
+            String encryptedKey = encryptFunction.encryptAES_CBC(secretKey, masterSecretKey, iv);
 
             writer.println("### KEY DELIMITER ###: " + keyDelimiter);
             writer.println("Key: " + encryptedKey);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
-        public static void saveIvInFile(String iv, SecretKey secretKey) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
+
+    public static void saveIvInFile(String iv, SecretKey secretKey) throws NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
         try ( PrintWriter writer = new PrintWriter(new FileWriter("src/main/java/com/redes/project/file/keyInfo.txt", true))) {
             Random rand = new Random();
             EncryptFunctions encryptFunction = new EncryptFunctions();
@@ -63,7 +60,6 @@ public class WriteFile {
 
             writer.println("### IV DELIMITER ###: " + ivDelimiter);
             writer.println("IV: " + encryptedIv);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
